@@ -1,0 +1,12 @@
+{
+  "name": "swlibrary",
+  "version": "1.1",
+  "description": "Start Code: npm start",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "chalk": "latest",
+  }
+}
