@@ -10,7 +10,8 @@ Why is there no option to use DX or D8
 This Usage Is Optional In The File classes.dex For Kotlin
 And classes.jar For Java You Can Remove One Or Both Of Them Better
 - Install Depence Before Use
-- pkg install di
+- pkg install openjdk-21
+- pkg install d8
 - npm -i
 */
 var repoLibrary = JSON.parse(fs.readFileSync("reposw.json", "utf8"));
