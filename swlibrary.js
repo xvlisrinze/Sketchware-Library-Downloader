@@ -17,7 +17,7 @@ And classes.jar For Java You Can Remove One Or Both Of Them Better
 var repoLibrary = JSON.parse(fs.readFileSync("reposw.json", "utf8"));
 var libraryargs = process.argv[2];
 if (!libraryargs) {
-  return 	console.log('Use Args\nExample: node swlibrary.js <library>\n< === ! Confused ! === >\nExample: node swlibrary.js com.google.android.material:material:1.9.0\n< === ! Scope Specifications ! === >\ngroup:artifact:version\n');
+  return console.log('Use Args\nExample: node swlibrary.js <library>\n< === ! Confused ! === >\nExample: node swlibrary.js com.google.android.material:material:1.9.0\n< === ! Scope Specifications ! === >\ngroup:artifact:version\n');
 }
 function buildMavenPath(libraryargs) {
   var [groupId, artifactId, version] = libraryargs.split(":");
