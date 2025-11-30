@@ -19,11 +19,11 @@ var libraryargs = process.argv[2];
 if (!libraryargs) {
   return console.log('Use Args\nExample: node swlibrary.js <library>\n< === ! Confused ! === >\nExample: node swlibrary.js com.google.android.material:material:1.9.0\n< === ! Scope Specifications ! === >\ngroup:artifact:version\n');
 }
-function buildMavenPath(libraryargs) {
+function buildMavenPath(libraryargs, ext = "jar") {
   var [groupId, artifactId, version] = libraryargs.split(":");
   var LibGroup = groupId.replace(/\./g, "/");
-  var jarName = `${artifactId}-${version}.jar`;
-  return { jarPath: `${LibGroup}/${artifactId}/${version}/${jarName}`, artifactId, version };
+  var fileName = `${artifactId}-${version}.${ext}`;
+  return { jarPath: `${LibGroup}/${artifactId}/${version}/${fileName}`, artifactId, version, ext };
 }
 
 function LibraryDownloader(url, D8FileSt) {
@@ -54,31 +54,53 @@ function D8weDX(jarPath, outputDir) {
 }
 
 (async () => {
-  var { jarPath, artifactId, version } = buildMavenPath(libraryargs);
   var libraryBaseDir = "./swlibrary";
-  var libraryDir = pathModule.join(libraryBaseDir, `${artifactId}_V_${version}`);
-  if (!fs.existsSync(libraryDir)) fs.mkdirSync(libraryDir, { recursive: true });
-  var D8File = pathModule.join(libraryDir, `classes.jar`);
   let schdown = false;
   for (var replib of repoLibrary) {
-    var url = `${replib.url.replace(/\/$/, "")}/${jarPath}`;
-    try {
-      console.log(chalk.bgGreen(" LOG ") + ` Download From ${replib.name}: ${url}`);
-      await LibraryDownloader(url, D8File);
-      console.log(chalk.bgGreen(" LOG ") + ` Saved To ${D8File}`);
+    for (let ext of ["jar", "aar"]) {
+      var { jarPath, artifactId, version } = buildMavenPath(libraryargs, ext);
+      var libraryDir = pathModule.join(libraryBaseDir, `${artifactId}_V_${version}`);
+      if (!fs.existsSync(libraryDir)) fs.mkdirSync(libraryDir, { recursive: true });
+      var D8File = pathModule.join(libraryDir, `classes.jar`);
+      var url = `${replib.url.replace(/\/$/, "")}/${jarPath}`;
       try {
-        var dexPath = await D8weDX(D8File, libraryDir);
-        console.log(chalk.bgGreen(" LOG ") + ` Created Dex: ${dexPath}`);
-      } catch (err) {
+        console.log(chalk.bgGreen(" LOG ") + ` Download From ${replib.name}: ${url}`);
+        await LibraryDownloader(url, D8File);
+        console.log(chalk.bgGreen(" LOG ") + ` Saved To ${D8File}`);
+        if (ext === "aar") {
+          var unzipper = require("unzipper");
+          await fs.createReadStream(D8File)
+          .pipe(unzipper.Extract({ path: libraryDir }));
+          fs.renameSync(
+            pathModule.join(libraryDir, "classes.jar"),
+          );
+        }
+        try {
+          var dexPath = await D8weDX(D8File, libraryDir);
+          console.log(chalk.bgGreen(" LOG ") + ` Created Dex: ${dexPath}`);
+        } catch {
         console.log(chalk.bgYellow(" DEBUG ") + ` "Creating Dex" Error: ${err.message}`);
+        }
+        schdown = true;
+        break;
+      } catch {
+        console.log(chalk.bgRed(" FAILED ") + ` Library ${replib.name} Failed, Try Another`);
       }
-      schdown = true;
+    }
+    if (schdown) {
       break;
-    } catch (err) {
-      console.log(chalk.bgRed(" FAILED ") + ` Library ${replib.name} Failed, Try Another`);
     }
   }
   if (!schdown) {
     console.log(chalk.bgRed(" FAILED ") + " Library Not Found ");
+    try {
+      fs.rmdirSync("./swlibrary"+'/'+`${artifactId}_V_${version}`, { recursive: true, force: true });
+      process.exit(-1);
+    } catch {
+      process.exit(-1);
+    }
+  } else if (schdown === true) {
+    console.log(chalk.bgGreen(" LOG ") + ` DOWNLOAD COMPLETE `);
+    process.exit(-1);
   }
 })();
