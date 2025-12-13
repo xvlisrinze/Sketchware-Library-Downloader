@@ -6,6 +6,10 @@ OVERCOMING LIBRARY DOWNLOAD ERRORS IN SKETCHWARE PRO
 pkg update && pkg upgrade
 pkg install openjdk-21
 pkg install d8
+pkg install git
+gitclone https://github.com/xvlisrinze/Sketchware-Library-Downloader.git
+cd Sketchware-Library-Downloader
+npm i
 ```
 If you want something lighter, you can use Java 17.
 ```
